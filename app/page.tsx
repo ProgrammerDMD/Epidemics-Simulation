@@ -7,5 +7,9 @@ const Canvas = dynamic(() => import('@/components/Canvas'), {
 });
 
 export default function Home() {
-  return <Canvas />;
+  return (
+    <div className="bg-black">
+      <Canvas />
+    </div>
+  );
 }

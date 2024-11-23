@@ -1,11 +1,6 @@
+import { Circle, CIRCLE_RADIUS, Status } from "@/components/Circle";
 import { useEffect, useState } from 'react';
 import { Stage, Layer, Circle as KonvaCircle } from 'react-konva';
-
-export interface Circle {
-  x: number;
-  y: number;
-  angle: number;
-}
 
 function angleToVelocity(angle: number, speed: number) {
   const radians = (angle * Math.PI) / 180;
@@ -14,29 +9,56 @@ function angleToVelocity(angle: number, speed: number) {
   return { vx, vy };
 }
 
+function getRandomStatus(): Status {
+  return Math.floor(Math.random() * 3);
+}
+
+function getColorByStatus(status: Status): string {
+  switch (status) {
+    case Status.RECOVERED:
+      return "green";
+    case Status.INFECTED:
+      return "red";
+    case Status.SUSCEPTIBLE:
+      return "white"
+  }
+}
+
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function Canvas() {
-  const circleRadius = 12.5;
-  const speed = 10;
-
+  const speed = 5;
   const circlesImplicit: Circle[] = [];
-  for (let i = 0; i < 100; i++) {
-    circlesImplicit.push({
-      x: Math.random() * (window.innerWidth - 2 * circleRadius) + circleRadius,
-      y: Math.random() * (window.innerHeight - 2 * circleRadius) + circleRadius,
-      angle: Math.random() * 360
-    });
+
+  for (let i = 0; i < 1; i++) {
+    circlesImplicit.push(new Circle(
+      Math.random() * (window.innerWidth - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
+      Math.random() * (window.innerHeight - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
+      Math.random() * 360,
+      Status.INFECTED,
+      0
+    ));
   }
+
+  for (let i = 0; i < 999; i++) {
+    circlesImplicit.push(new Circle(
+      Math.random() * (window.innerWidth - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
+      Math.random() * (window.innerHeight - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
+      Math.random() * 360,
+      Status.SUSCEPTIBLE,
+      0
+    ));
+  }
+
 
   const [circles, setCircles] = useState<Circle[]>(circlesImplicit);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function moveCircles() {
+    async function run() {
       while (isMounted) {
         setCircles(prevCircles => {
           return prevCircles.map(circle => {
@@ -49,23 +71,30 @@ function Canvas() {
 
             let newAngle = circle.angle;
 
-            if (nextX - circleRadius < 0) {
-              nextX = circleRadius;
+            if (nextX - CIRCLE_RADIUS < 0) {
+              nextX = CIRCLE_RADIUS;
               newAngle = 180 - newAngle;
-            } else if (nextX + circleRadius > screenWidth) {
-              nextX = screenWidth - circleRadius;
+            } else if (nextX + CIRCLE_RADIUS > screenWidth) {
+              nextX = screenWidth - CIRCLE_RADIUS;
               newAngle = 180 - newAngle;
             }
 
-            if (nextY - circleRadius < 0) {
-              nextY = circleRadius;
+            if (nextY - CIRCLE_RADIUS < 0) {
+              nextY = CIRCLE_RADIUS;
               newAngle = 360 - newAngle;
-            } else if (nextY + circleRadius > screenHeight) {
-              nextY = screenHeight - circleRadius;
+            } else if (nextY + CIRCLE_RADIUS > screenHeight) {
+              nextY = screenHeight - CIRCLE_RADIUS;
               newAngle = 360 - newAngle;
             }
 
-            return { x: nextX, y: nextY, angle: newAngle };
+            circle.recover();
+            if (!circle.infectable()) return new Circle(nextX, nextY, newAngle, circle.status, circle.recoveryThreshold);
+            const isOverlapping = prevCircles.find(otherCircle =>
+              circle !== otherCircle && circle.overlaps(otherCircle) && otherCircle.status == Status.INFECTED
+            );
+
+            if (isOverlapping) return new Circle(nextX, nextY, newAngle, Status.INFECTED, circle.recoveryThreshold);
+            return new Circle(nextX, nextY, newAngle, circle.status, circle.recoveryThreshold);
           });
         });
 
@@ -73,7 +102,7 @@ function Canvas() {
       }
     }
 
-    moveCircles();
+    run();
 
     return () => {
       isMounted = false;
@@ -88,8 +117,8 @@ function Canvas() {
             key={index}
             x={circle.x}
             y={circle.y}
-            radius={circleRadius}
-            fill={"black"}
+            radius={CIRCLE_RADIUS}
+            fill={getColorByStatus(circle.status)}
           />
         ))}
       </Layer>
