@@ -9,11 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
+    "@mui/material": "^6.1.8",
+    "@mui/x-charts": "^7.22.3",
     "konva": "^9.3.16",
     "next": "14.2.18",
     "react": "^18",
     "react-dom": "^18",
-    "react-konva": "^18.2.10"
+    "react-konva": "^18.2.10",
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",
