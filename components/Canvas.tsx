@@ -38,43 +38,19 @@ export const useCircleStore = create<CircleStore>((set) => ({
   updateCircles: (updater) => set((state) => ({ circles: updater(state.circles) })),
 }));
 
-const WIDTH = window.innerWidth;
-const HEIGHT = window.innerHeight;
-
-function Canvas() {
+function Canvas({ width, height } : {
+  width: number,
+  height: number
+}) {
   const speed = 5;
-  const circlesImplicit: Circle[] = [];
-
-  for (let i = 0; i < 1; i++) {
-    circlesImplicit.push(new Circle(
-      Math.random() * (WIDTH - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
-      Math.random() * (HEIGHT - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
-      Math.random() * 360,
-      Status.INFECTED,
-      0,
-      Math.floor(Math.random() * (MAX_RECOVERY_THRESHOLD - MIN_RECOVERY_THRESHOLD) + MIN_RECOVERY_THRESHOLD)
-    ));
-  }
-
-  for (let i = 0; i < 999; i++) {
-    circlesImplicit.push(new Circle(
-      Math.random() * (WIDTH - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
-      Math.random() * (HEIGHT - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
-      Math.random() * 360,
-      Status.SUSCEPTIBLE,
-      0,
-      Math.floor(Math.random() * (MAX_RECOVERY_THRESHOLD - MIN_RECOVERY_THRESHOLD) + MIN_RECOVERY_THRESHOLD)
-    ));
-  }
-
   const { circles, updateCircles } = useCircleStore();
 
   useEffect(() => {
     const initialCircles: Circle[] = [];
 
     initialCircles.push(new Circle(
-      Math.random() * (WIDTH - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
-      Math.random() * (HEIGHT - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
+      Math.random() * (width - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
+      Math.random() * (height - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
       Math.random() * 360,
       Status.INFECTED,
       0,
@@ -83,8 +59,8 @@ function Canvas() {
 
     for (let i = 0; i < 999; i++) {
       initialCircles.push(new Circle(
-        Math.random() * (WIDTH - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
-        Math.random() * (HEIGHT - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
+        Math.random() * (width - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
+        Math.random() * (height - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
         Math.random() * 360,
         Status.SUSCEPTIBLE,
         0,
@@ -108,24 +84,21 @@ function Canvas() {
             let nextX = circle.x + vx;
             let nextY = circle.y + vy;
 
-            const screenWidth = window.innerWidth;
-            const screenHeight = window.innerHeight;
-
             let newAngle = circle.angle;
 
             if (nextX - CIRCLE_RADIUS < 0) {
               nextX = CIRCLE_RADIUS;
               newAngle = 180 - newAngle;
-            } else if (nextX + CIRCLE_RADIUS > screenWidth) {
-              nextX = screenWidth - CIRCLE_RADIUS;
+            } else if (nextX + CIRCLE_RADIUS > width) {
+              nextX = width - CIRCLE_RADIUS;
               newAngle = 180 - newAngle;
             }
 
             if (nextY - CIRCLE_RADIUS < 0) {
               nextY = CIRCLE_RADIUS;
               newAngle = 360 - newAngle;
-            } else if (nextY + CIRCLE_RADIUS > screenHeight) {
-              nextY = screenHeight - CIRCLE_RADIUS;
+            } else if (nextY + CIRCLE_RADIUS > height) {
+              nextY = height - CIRCLE_RADIUS;
               newAngle = 360 - newAngle;
             }
 
@@ -153,7 +126,7 @@ function Canvas() {
   }, []);
 
   return (
-    <Stage width={WIDTH} height={HEIGHT}>
+    <Stage width={width} height={height}>
       <Layer>
         {circles.map((circle, index) => (
           <KonvaCircle
