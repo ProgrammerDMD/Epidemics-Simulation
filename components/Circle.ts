@@ -4,10 +4,6 @@ export enum Status {
 
 export const CIRCLE_RADIUS = 2;
 export const RECOVERY_RATE = 1;
-export const MAX_RECOVERY_THRESHOLD = 30 * 30; // Amount needed for infected people to recover, 30 seconds recovery for 30 frames
-export const MIN_RECOVERY_THRESHOLD = 10 * 30;
-export const DYING_PROBABILITY = 0.01; // 30%
-export const DYING_PROBABILITY_PER_FRAME = 1 - Math.pow(1 - DYING_PROBABILITY, 1 / 30);
 
 export class Circle {
     x: number;
@@ -45,8 +41,8 @@ export class Circle {
         }
     }
 
-    kill(): void {
-        if (this.status == Status.INFECTED && Math.random() < DYING_PROBABILITY_PER_FRAME) {
+    kill(dyingProbabilityPerFrame: number): void {
+        if (this.status == Status.INFECTED && Math.random() < dyingProbabilityPerFrame) {
             this.status = Status.DEAD;
         }
     }

@@ -1,6 +1,7 @@
 "use client";
-import { Circle, CIRCLE_RADIUS, MAX_RECOVERY_THRESHOLD, MIN_RECOVERY_THRESHOLD, Status } from "@/components/Circle";
-import { useEffect, useState } from 'react';
+import { SETTINGS } from "@/app/page";
+import { Circle, CIRCLE_RADIUS, Status } from "@/components/Circle";
+import { useEffect } from 'react';
 import { Stage, Layer, Circle as KonvaCircle } from 'react-konva';
 import { create } from "zustand";
 
@@ -38,7 +39,8 @@ export const useCircleStore = create<CircleStore>((set) => ({
   updateCircles: (updater) => set((state) => ({ circles: updater(state.circles) })),
 }));
 
-function Canvas({ width, height } : {
+function Canvas({ settings, width, height }: {
+  settings: SETTINGS,
   width: number,
   height: number
 }) {
@@ -47,24 +49,32 @@ function Canvas({ width, height } : {
 
   useEffect(() => {
     const initialCircles: Circle[] = [];
+    var maxTime = settings.maxTime <= 0 ? 30 : settings.maxTime;
+    var minTime = settings.minTime <= 0 ? 15 : settings.minTime;
+    var interval = (maxTime - minTime) * 30;
+    if (interval <= 0) {
+      interval = 30 * 30;
+    }
 
-    initialCircles.push(new Circle(
-      Math.random() * (width - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
-      Math.random() * (height - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
-      Math.random() * 360,
-      Status.INFECTED,
-      0,
-      Math.floor(Math.random() * (MAX_RECOVERY_THRESHOLD - MIN_RECOVERY_THRESHOLD) + MIN_RECOVERY_THRESHOLD)
-    ));
+    for (let i = 0; i < settings.initialAffected; i++) {
+      initialCircles.push(new Circle(
+        Math.random() * (width - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
+        Math.random() * (height - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
+        Math.random() * 360,
+        Status.INFECTED,
+        0,
+        Math.floor(Math.random() * interval + minTime)
+      ));
+    }
 
-    for (let i = 0; i < 999; i++) {
+    for (let i = 0; i < settings.people - settings.initialAffected; i++) {
       initialCircles.push(new Circle(
         Math.random() * (width - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
         Math.random() * (height - 2 * CIRCLE_RADIUS) + CIRCLE_RADIUS,
         Math.random() * 360,
         Status.SUSCEPTIBLE,
         0,
-        Math.floor(Math.random() * (MAX_RECOVERY_THRESHOLD - MIN_RECOVERY_THRESHOLD) + MIN_RECOVERY_THRESHOLD)
+        Math.floor(Math.random() * interval + minTime)
       ));
     }
 
@@ -73,6 +83,7 @@ function Canvas({ width, height } : {
 
   useEffect(() => {
     let isMounted = true;
+    const DYING_PROBABILITY_PER_FRAME = 1 - Math.pow(1 - settings.mortality, 1 / 30);
 
     async function run() {
       while (isMounted) {
@@ -103,7 +114,7 @@ function Canvas({ width, height } : {
             }
 
             circle.recover();
-            circle.kill();
+            circle.kill(DYING_PROBABILITY_PER_FRAME);
             if (!circle.infectable()) return new Circle(nextX, nextY, newAngle, circle.status, circle.recoveryThreshold, circle.maxRecoveryThreshold);
             const isOverlapping = prevCircles.some(otherCircle =>
               circle !== otherCircle && circle.overlaps(otherCircle) && otherCircle.status == Status.INFECTED
